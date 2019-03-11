@@ -6,11 +6,12 @@ import com.fasterxml.jackson.annotation.*;
 
 /** MethodRecord */
 @JsonTypeName("!java/method")
-public class MethodRecord implements Record {
+public final class MethodRecord extends Record {
   public final String id;
   public final String name;
 
-  MethodRecord(final String id, final String name) {
+  MethodRecord(final String comment, final String id, final String name) {
+    super(comment);
     this.id = id;
     this.name = name;
   }

@@ -4,13 +4,13 @@ package org.drydoc;
 
 import com.fasterxml.jackson.annotation.*;
 
-/** ClassRecord */
-@JsonTypeName("!java/class")
-public final class ClassRecord extends Record {
+/** InterfaceRecord */
+@JsonTypeName("!java/interface")
+public final class InterfaceRecord extends Record {
   public final String id;
   public final String name;
 
-  ClassRecord(final String comment, final String id, final String name) {
+  InterfaceRecord(final String comment, final String id, final String name) {
     super(comment);
     this.id = id;
     this.name = name;

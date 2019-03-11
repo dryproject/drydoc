@@ -1,11 +1,26 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
-mainClassName = 'org.drydoc.ParseJava'
+application {
+  mainClassName = 'org.drydoc.ParseJava'
+}
+
+startScripts {
+  applicationName = 'drydoc-java'
+}
+
+distributions {
+  main {
+    baseName = 'drydoc-java'
+  }
+}
 
 jar {
   baseName = 'drydoc-java'
   version  = rootProject.file('../VERSION').text.trim()
+  manifest {
+    attributes("Main-Class": application.mainClassName)
+  }
 }
 
 java {
