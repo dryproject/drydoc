@@ -20,6 +20,12 @@ repositories {
 dependencies {
   // See: https://github.com/javaparser/javaparser
   implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.13.3'
+
+  // See: https://github.com/FasterXML/jackson-databind
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+
+  // See: https://github.com/FasterXML/jackson-dataformats-text
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.8'
 }
 
 sourceSets {
