@@ -1,0 +1,36 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'org.drydoc.ParseJava'
+
+jar {
+  baseName = 'drydoc-java'
+  version  = rootProject.file('../VERSION').text.trim()
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  // See: https://github.com/javaparser/javaparser
+  implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.13.3'
+}
+
+sourceSets {
+  main {
+    java {
+      srcDirs = ['src']
+    }
+  }
+  test {
+    java {
+      srcDirs = ['test']
+    }
+  }
+}
