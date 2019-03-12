@@ -30,6 +30,7 @@ public final class MethodRecord extends Record {
                final List<ParameterRecord> parameters,
                final List<String> throws_) {
     super(id, name, comment, annotations, modifiers);
+    assert(type != null);
     this.type = type;
     this.parameters = (parameters != null && !parameters.isEmpty()) ? parameters : null;
     this.throws_ = (throws_ != null && !throws_.isEmpty()) ? throws_ : null;

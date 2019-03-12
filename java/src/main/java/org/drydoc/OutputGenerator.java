@@ -20,6 +20,7 @@ import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -160,11 +161,26 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       final String name = variable.getName().asString();
       final String id = String.format("%s.%s%c%s", this.packageName, String.join(".", this.className), separator, name);
       final String type = variable.getTypeAsString();
+      final Object value = this.evalLiteralExpression(variable.getInitializer());
 
-      emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type));
+      emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type, value));
     }
 
     super.visit(node, arg);
+  }
+
+  Object evalLiteralExpression(Optional<Expression> value) {
+    if (!value.isPresent()) return null;
+    final Expression expr = value.get();
+    if (!expr.isLiteralExpr()) return null;
+    if (expr.isNullLiteralExpr()) return null;
+    if (expr.isBooleanLiteralExpr()) return expr.asBooleanLiteralExpr().getValue();
+    if (expr.isCharLiteralExpr()) return expr.asCharLiteralExpr().asChar();
+    if (expr.isDoubleLiteralExpr()) return expr.asDoubleLiteralExpr().asDouble();
+    if (expr.isIntegerLiteralExpr()) return expr.asIntegerLiteralExpr().asInt();
+    if (expr.isLongLiteralExpr()) return expr.asLongLiteralExpr().asLong();
+    if (expr.isStringLiteralExpr()) return expr.asStringLiteralExpr().asString();
+    return null; // unknown literal type
   }
 
   @Override

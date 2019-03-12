@@ -16,6 +16,7 @@ public final class ParameterRecord extends Record {
                   final List<String> annotations,
                   final List<String> modifiers) {
     super(null, name, null, annotations, modifiers);
+    assert(type != null);
     this.type = type;
   }
 }

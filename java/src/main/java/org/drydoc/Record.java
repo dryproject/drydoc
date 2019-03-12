@@ -37,6 +37,7 @@ public abstract class Record {
          final String comment,
          final List<String> annotations,
          final List<String> modifiers) {
+    assert(name != null);
     this.id = id;
     this.name = name;
     this.comment = comment;
