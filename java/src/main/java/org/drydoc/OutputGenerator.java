@@ -232,7 +232,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/expr/AnnotationExpr.html
     final List<String> result = new ArrayList<String>();
     for (final AnnotationExpr annotation : node.getAnnotations()) {
-      result.add(annotation.getNameAsString());
+      result.add(annotation.toString());
     }
     return result;
   }
