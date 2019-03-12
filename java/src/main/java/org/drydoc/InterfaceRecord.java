@@ -2,9 +2,10 @@
 
 package org.drydoc;
 
-import com.fasterxml.jackson.annotation.*;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /** InterfaceRecord */
 @JsonTypeName("!java/interface")

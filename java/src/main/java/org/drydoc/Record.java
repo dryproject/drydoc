@@ -2,14 +2,21 @@
 
 package org.drydoc;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /** Record */
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="type")
-@JsonSubTypes({ @JsonSubTypes.Type(ClassRecord.class), @JsonSubTypes.Type(MethodRecord.class) })
+@JsonSubTypes({@JsonSubTypes.Type(ClassRecord.class),
+  @JsonSubTypes.Type(FieldRecord.class),
+  @JsonSubTypes.Type(InterfaceRecord.class),
+  @JsonSubTypes.Type(MethodRecord.class),
+  @JsonSubTypes.Type(ParameterRecord.class),
+})
 public abstract class Record {
   @JsonInclude(Include.NON_NULL)
   public final String id;

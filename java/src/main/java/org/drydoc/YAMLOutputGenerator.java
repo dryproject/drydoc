@@ -2,12 +2,12 @@
 
 package org.drydoc;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-
-import java.util.Map;
 
 /** YAMLOutputGenerator */
 public class YAMLOutputGenerator extends OutputGenerator {

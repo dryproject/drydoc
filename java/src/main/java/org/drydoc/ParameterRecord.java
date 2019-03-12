@@ -2,9 +2,9 @@
 
 package org.drydoc;
 
-import com.fasterxml.jackson.annotation.*;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /** ParameterRecord */
 @JsonTypeName("!java/parameter")

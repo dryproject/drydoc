@@ -2,15 +2,15 @@
 
 package org.drydoc;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.ParserConfiguration.LanguageLevel;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ast.CompilationUnit;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParseResult;
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.ParserConfiguration.LanguageLevel;
+import com.github.javaparser.ast.CompilationUnit;
 
 /** ParseJava */
 public class ParseJava {
