@@ -21,6 +21,9 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -154,26 +157,12 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       final String name = variable.getName().asString();
       final String id = String.format("%s.%s%c%s", this.packageName, String.join(".", this.className), separator, name);
       final String type = variable.getTypeAsString();
-      final Object value = this.evalLiteralExpression(variable.getInitializer());
+      final Object value = variable.getInitializer().isPresent() ? this.evalExpression(variable.getInitializer().get()) : null;
 
       emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type, value));
     }
 
     super.visit(node, arg);
-  }
-
-  Object evalLiteralExpression(Optional<Expression> value) {
-    if (!value.isPresent()) return null;
-    final Expression expr = value.get();
-    if (!expr.isLiteralExpr()) return null;
-    if (expr.isNullLiteralExpr()) return null;
-    if (expr.isBooleanLiteralExpr()) return expr.asBooleanLiteralExpr().getValue();
-    if (expr.isCharLiteralExpr()) return expr.asCharLiteralExpr().asChar();
-    if (expr.isDoubleLiteralExpr()) return expr.asDoubleLiteralExpr().asDouble();
-    if (expr.isIntegerLiteralExpr()) return expr.asIntegerLiteralExpr().asInt();
-    if (expr.isLongLiteralExpr()) return expr.asLongLiteralExpr().asLong();
-    if (expr.isStringLiteralExpr()) return expr.asStringLiteralExpr().asString();
-    return null; // unknown literal type
   }
 
   @Override
@@ -252,5 +241,66 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       result.add(modifier.getKeyword().asString());
     }
     return result;
+  }
+
+  /** Partially evaluates constant field initializer expressions. */
+  Object evalExpression(final Expression expr) {
+    if (expr.isLiteralExpr()) {
+      if (expr.isNullLiteralExpr()) return null;
+      if (expr.isBooleanLiteralExpr()) return expr.asBooleanLiteralExpr().getValue();
+      if (expr.isCharLiteralExpr()) return expr.asCharLiteralExpr().asChar();
+      if (expr.isDoubleLiteralExpr()) return expr.asDoubleLiteralExpr().asDouble();
+      if (expr.isIntegerLiteralExpr()) return expr.asIntegerLiteralExpr().asInt();
+      if (expr.isLongLiteralExpr()) return expr.asLongLiteralExpr().asLong();
+      if (expr.isStringLiteralExpr()) return expr.asStringLiteralExpr().asString();
+      return null; // unknown literal type
+    }
+
+    if (expr.isUnaryExpr()) {
+      // Evaluate unary expressions such as `-1`, `-2`, etc:
+      switch (expr.asUnaryExpr().getOperator()) {
+        case MINUS:
+          final Expression subExpr = expr.asUnaryExpr().getExpression();
+          if (subExpr.isDoubleLiteralExpr()) return -1.0 * subExpr.asDoubleLiteralExpr().asDouble();
+          if (subExpr.isIntegerLiteralExpr()) return -1 * subExpr.asIntegerLiteralExpr().asInt();
+          if (subExpr.isLongLiteralExpr()) return -1L * subExpr.asLongLiteralExpr().asLong();
+          return null; // unable to evaluate expression
+        default:
+          return null; // unable to evaluate expression
+      }
+    }
+
+    if (expr.isFieldAccessExpr()) {
+      // TODO: reimplement this using reflection.
+      switch (expr.toString()) {
+        case "Byte.BYTES":               return Byte.BYTES;
+        case "Byte.MAX_VALUE":           return Byte.MAX_VALUE;
+        case "Byte.MIN_VALUE":           return Byte.MIN_VALUE;
+        case "Byte.SIZE":                return Byte.SIZE;
+        case "Character.MAX_CODE_POINT": return Character.MAX_CODE_POINT;
+        case "Character.MAX_VALUE":      return Character.MAX_VALUE;
+        case "Character.MIN_CODE_POINT": return Character.MIN_CODE_POINT;
+        case "Character.MIN_VALUE":      return Character.MIN_VALUE;
+        case "Integer.BYTES":            return Integer.BYTES;
+        case "Integer.MAX_VALUE":        return Integer.MAX_VALUE;
+        case "Integer.MIN_VALUE":        return Integer.MIN_VALUE;
+        case "Integer.SIZE":             return Integer.SIZE;
+        case "Long.BYTES":               return Long.BYTES;
+        case "Long.MAX_VALUE":           return Long.MAX_VALUE;
+        case "Long.MIN_VALUE":           return Long.MIN_VALUE;
+        case "Long.SIZE":                return Long.SIZE;
+        case "Short.BYTES":              return Short.BYTES;
+        case "Short.MAX_VALUE":          return Short.MAX_VALUE;
+        case "Short.MIN_VALUE":          return Short.MIN_VALUE;
+        case "Short.SIZE":               return Short.SIZE;
+        default: return null; // unknown field access
+      }
+    }
+
+    if (expr.isMethodCallExpr()) {
+      // TODO: parse `UUID.fromString("...")`
+    }
+
+    return null; // unable to evaluate expression
   }
 }
