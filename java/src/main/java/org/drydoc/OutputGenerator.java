@@ -3,12 +3,19 @@
 package org.drydoc;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
+import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
@@ -30,11 +37,15 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
 
   @Override
   public void visit(final CompilationUnit node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/CompilationUnit.html
+
     super.visit(node, arg);
   }
 
   @Override
   public void visit(final JavadocComment node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/comments/JavadocComment.html
+
     this.comment = node.getContent();
 
     super.visit(node, arg);
@@ -42,14 +53,17 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
 
   @Override
   public void visit(final PackageDeclaration node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/PackageDeclaration.html
+
     this.packageName = node.getName().asString();
 
     super.visit(node, arg);
   }
 
-  //@SuppressWarnings("unchecked")
   @Override
   public void visit(final ClassOrInterfaceDeclaration node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/ClassOrInterfaceDeclaration.html
+
     final String name = node.getName().asString();
 
     this.className = new ArrayList<String>(Arrays.asList(name));
@@ -65,26 +79,26 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
 
     final String id = String.format("%s.%s", this.packageName, String.join(".", this.className));
 
-    final List<String> annotations = new ArrayList<String>();
-    // TODO
+    final List<String> annotations = this.parseAnnotations(node);
+    final List<String> modifiers = this.parseModifiers(node);
 
-    final List<String> modifiers = new ArrayList<String>();
-    if (node.isPublic()) modifiers.add("public");
-    if (node.isPrivate()) modifiers.add("private");
-    if (node.isProtected()) modifiers.add("protected");
-    if (node.isAbstract()) modifiers.add("abstract");
-    if (node.isStatic()) modifiers.add("static");
-    if (node.isFinal()) modifiers.add("final");
-    if (node.isStrictfp()) modifiers.add("strictfp");
-
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/TypeParameter.html
     final List<String> parameters = new ArrayList<String>();
     // TODO
 
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/nodeTypes/NodeWithExtends.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/ClassOrInterfaceType.html
     final List<String> extends_ = new ArrayList<String>();
-    // TODO
+    for (final ClassOrInterfaceType extendedType : node.getExtendedTypes()) {
+      extends_.add(extendedType.asString());
+    }
 
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/nodeTypes/NodeWithImplements.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/ClassOrInterfaceType.html
     final List<String> implements_ = new ArrayList<String>();
-    // TODO
+    for (final ClassOrInterfaceType implementedType : node.getImplementedTypes()) {
+      implements_.add(implementedType.asString());
+    }
 
     emit(node.isInterface() ?
       new InterfaceRecord(
@@ -112,34 +126,60 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   }
 
   @Override
-  public void visit(final MethodDeclaration node, final Void arg) {
-    final String name = node.getName().asString();
-    final String id = String.format("%s.%s.%s", this.packageName, String.join(".", this.className), name);
+  public void visit(final FieldDeclaration node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/FieldDeclaration.html
 
-    final List<String> annotations = new ArrayList<String>();
-    // TODO
-
-    final String type = node.getTypeAsString();
-
+    final List<String> annotations = this.parseAnnotations(node);
+    final List<String> modifiers = this.parseModifiers(node);
+    /*
     final List<String> modifiers = new ArrayList<String>();
     if (node.isPublic()) modifiers.add("public");
     if (node.isPrivate()) modifiers.add("private");
     if (node.isProtected()) modifiers.add("protected");
-    if (node.isAbstract()) modifiers.add("abstract");
     if (node.isStatic()) modifiers.add("static");
     if (node.isFinal()) modifiers.add("final");
-    if (node.isDefault()) modifiers.add("default");
-    if (node.isSynchronized()) modifiers.add("synchronized");
-    if (node.isNative()) modifiers.add("native");
-    if (node.isStrictfp()) modifiers.add("strictfp");
+    if (node.isTransient()) modifiers.add("transient");
+    if (node.isVolatile()) modifiers.add("volatile");
+    */
 
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/VariableDeclarator.html
+    for (final VariableDeclarator variable : node.getVariables()) {
+      final String name = variable.getName().asString();
+      final String id = String.format("%s.%s.%s", this.packageName, String.join(".", this.className), name);
+      final String type = variable.getTypeAsString();
+
+      emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type));
+    }
+
+    super.visit(node, arg);
+  }
+
+  @Override
+  public void visit(final MethodDeclaration node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/MethodDeclaration.html
+
+    final String name = node.getName().asString();
+    final String id = node.isStatic() ?
+      String.format("%s.%s.%s()", this.packageName, String.join(".", this.className), name) :
+      String.format("%s.%s#%s()", this.packageName, String.join(".", this.className), name);
+
+    final List<String> annotations = this.parseAnnotations(node);
+    final List<String> modifiers = this.parseModifiers(node);
+
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/Type.html
+    final String type = node.getTypeAsString();
+
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/Parameter.html
     final List<ParameterRecord> parameters = new ArrayList<ParameterRecord>();
     for (final Parameter parameter : node.getParameters()) {
       final String paramName = parameter.getNameAsString();
       final String paramType = parameter.getTypeAsString();
-      parameters.add(new ParameterRecord(paramName, paramType, null, null)); // TODO
+      final List<String> paramAnnotations = this.parseAnnotations(parameter);
+      final List<String> paramModifiers = this.parseModifiers(parameter);
+      parameters.add(new ParameterRecord(paramName, paramType, paramAnnotations, paramModifiers));
     }
 
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/ReferenceType.html
     final List<String> exceptions = new ArrayList<String>();
     for (final ReferenceType exception : node.getThrownExceptions()) {
       exceptions.add(exception.asString());
@@ -157,5 +197,26 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     ));
 
     super.visit(node, arg);
+  }
+
+  protected List<String> parseAnnotations(final NodeWithAnnotations<?> node) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/nodeTypes/NodeWithAnnotations.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/expr/AnnotationExpr.html
+    final List<String> result = new ArrayList<String>();
+    for (final AnnotationExpr annotation : node.getAnnotations()) {
+      result.add(annotation.getNameAsString());
+    }
+    return result;
+  }
+
+  protected List<String> parseModifiers(final NodeWithModifiers<?> node) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/nodeTypes/NodeWithModifiers.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/Modifier.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/Modifier.Keyword.html
+    final List<String> result = new ArrayList<String>();
+    for (final Modifier modifier : node.getModifiers()) {
+      result.add(modifier.getKeyword().asString());
+    }
+    return result;
   }
 }
