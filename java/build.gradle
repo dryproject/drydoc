@@ -42,16 +42,3 @@ dependencies {
   // See: https://github.com/FasterXML/jackson-dataformats-text
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.8'
 }
-
-sourceSets {
-  main {
-    java {
-      srcDirs = ['src']
-    }
-  }
-  test {
-    java {
-      srcDirs = ['test']
-    }
-  }
-}
