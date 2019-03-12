@@ -27,6 +27,8 @@ import java.util.Optional;
 
 /** OutputGenerator */
 public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
+  // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/visitor/VoidVisitor.html
+
   protected String comment;
   protected String packageName;
   protected List<String> className;
@@ -63,6 +65,8 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final ClassOrInterfaceDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/ClassOrInterfaceDeclaration.html
+    final List<String> annotations = this.parseAnnotations(node);
+    final List<String> modifiers = this.parseModifiers(node);
 
     final String name = node.getName().asString();
 
@@ -78,9 +82,6 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     }
 
     final String id = String.format("%s.%s", this.packageName, String.join(".", this.className));
-
-    final List<String> annotations = this.parseAnnotations(node);
-    final List<String> modifiers = this.parseModifiers(node);
 
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/TypeParameter.html
     final List<String> parameters = new ArrayList<String>();
@@ -128,24 +129,14 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final FieldDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/FieldDeclaration.html
-
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
-    /*
-    final List<String> modifiers = new ArrayList<String>();
-    if (node.isPublic()) modifiers.add("public");
-    if (node.isPrivate()) modifiers.add("private");
-    if (node.isProtected()) modifiers.add("protected");
-    if (node.isStatic()) modifiers.add("static");
-    if (node.isFinal()) modifiers.add("final");
-    if (node.isTransient()) modifiers.add("transient");
-    if (node.isVolatile()) modifiers.add("volatile");
-    */
 
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/VariableDeclarator.html
+    final Character separator = node.isStatic() ? '.' : '#';
     for (final VariableDeclarator variable : node.getVariables()) {
       final String name = variable.getName().asString();
-      final String id = String.format("%s.%s.%s", this.packageName, String.join(".", this.className), name);
+      final String id = String.format("%s.%s%c%s", this.packageName, String.join(".", this.className), separator, name);
       final String type = variable.getTypeAsString();
 
       emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type));
@@ -157,14 +148,11 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final MethodDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/MethodDeclaration.html
-
-    final String name = node.getName().asString();
-    final String id = node.isStatic() ?
-      String.format("%s.%s.%s()", this.packageName, String.join(".", this.className), name) :
-      String.format("%s.%s#%s()", this.packageName, String.join(".", this.className), name);
-
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
+
+    final String name = node.getName().asString();
+    final String id = this.makeMethodID(node);
 
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/type/Type.html
     final String type = node.getTypeAsString();
@@ -197,6 +185,19 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     ));
 
     super.visit(node, arg);
+  }
+
+  protected String makeMethodID(final MethodDeclaration node) {
+    final List<String> paramTypes = new ArrayList<String>();
+    for (final Parameter parameter : node.getParameters()) {
+      paramTypes.add(parameter.getTypeAsString());
+    }
+    final Character separator = node.isStatic() ? '.' : '#';
+    return String.format("%s.%s%c%s(%s)",
+      this.packageName,
+      String.join(".", this.className),
+      separator, node.getName().asString(),
+      String.join(",", paramTypes));
   }
 
   protected List<String> parseAnnotations(final NodeWithAnnotations<?> node) {
