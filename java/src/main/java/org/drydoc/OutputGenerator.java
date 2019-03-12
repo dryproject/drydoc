@@ -7,6 +7,7 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
@@ -122,6 +123,13 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
         implements_
       )
     );
+
+    super.visit(node, arg);
+  }
+
+  @Override
+  public void visit(final ConstructorDeclaration node, final Void arg) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/ConstructorDeclaration.html
 
     super.visit(node, arg);
   }
