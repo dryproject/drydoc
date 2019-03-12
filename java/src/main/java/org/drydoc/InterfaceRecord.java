@@ -4,15 +4,25 @@ package org.drydoc;
 
 import com.fasterxml.jackson.annotation.*;
 
+import java.util.List;
+
 /** InterfaceRecord */
 @JsonTypeName("!java/interface")
 public final class InterfaceRecord extends Record {
-  public final String id;
-  public final String name;
+  public final List<String> parameters;
 
-  InterfaceRecord(final String comment, final String id, final String name) {
-    super(comment);
-    this.id = id;
-    this.name = name;
+  @JsonProperty("extends")
+  public final List<String> extends_;
+
+  InterfaceRecord(final String id,
+                  final String name,
+                  final String comment,
+                  final List<String> annotations,
+                  final List<String> modifiers,
+                  final List<String> parameters,
+                  final List<String> extends_) {
+    super(id, name, comment, annotations, modifiers);
+    this.parameters = (parameters != null && !parameters.isEmpty()) ? parameters : null;
+    this.extends_ = (extends_ != null && !extends_.isEmpty()) ? extends_ : null;
   }
 }

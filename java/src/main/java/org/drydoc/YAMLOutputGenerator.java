@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
+import java.util.Map;
+
 /** YAMLOutputGenerator */
 public class YAMLOutputGenerator extends OutputGenerator {
   protected final ObjectMapper yamlMapper;
@@ -26,6 +28,16 @@ public class YAMLOutputGenerator extends OutputGenerator {
   protected void emit(final Record record) {
     try {
       System.out.println(yamlMapper.writeValueAsString(record));
+    }
+    catch (final JsonProcessingException error) {
+      throw new RuntimeException(error);
+    }
+  }
+
+  @Override
+  protected void emit(final Map<String, Object> map) {
+    try {
+      System.out.println(yamlMapper.writeValueAsString(map));
     }
     catch (final JsonProcessingException error) {
       throw new RuntimeException(error);
