@@ -18,12 +18,9 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.FieldAccessExpr;
-import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -34,7 +31,6 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/visitor/VoidVisitor.html
 
-  protected String comment;
   protected String packageName;
   protected List<String> className;
 
@@ -45,15 +41,6 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final CompilationUnit node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/CompilationUnit.html
-
-    super.visit(node, arg);
-  }
-
-  @Override
-  public void visit(final JavadocComment node, final Void arg) {
-    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/comments/JavadocComment.html
-
-    //this.comment = node.getContent(); // FIXME
 
     super.visit(node, arg);
   }
@@ -74,6 +61,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     if (node.isLocalClassDeclaration()) return;
     if (!node.isTopLevelType()) return; // TODO: check this
 
+    final String comment = this.parseComment(node);
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
@@ -114,7 +102,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       new InterfaceRecord(
         id,
         name,
-        this.comment,
+        comment,
         annotations,
         modifiers,
         parameters,
@@ -123,7 +111,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       new ClassRecord(
         id,
         name,
-        this.comment,
+        comment,
         annotations,
         modifiers,
         parameters,
@@ -148,6 +136,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/FieldDeclaration.html
     if (node.isPrivate()) return;
 
+    final String comment = this.parseComment(node);
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
@@ -159,7 +148,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       final String type = variable.getTypeAsString();
       final Object value = variable.getInitializer().isPresent() ? this.evalExpression(variable.getInitializer().get()) : null;
 
-      emit(new FieldRecord(id, name, this.comment, annotations, modifiers, type, value));
+      emit(new FieldRecord(id, name, comment, annotations, modifiers, type, value));
     }
 
     super.visit(node, arg);
@@ -170,6 +159,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/MethodDeclaration.html
     if (node.isPrivate()) return;
 
+    final String comment = this.parseComment(node);
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
@@ -198,7 +188,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     emit(new MethodRecord(
       id,
       name,
-      this.comment,
+      comment,
       annotations,
       modifiers,
       type,
@@ -220,6 +210,13 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       String.join(".", this.className),
       separator, node.getName().asString(),
       String.join(",", paramTypes));
+  }
+
+  protected String parseComment(final Node node) {
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/Node.html
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/comments/Comment.html
+    final Comment comment = node.getComment().orElse(null);
+    return (comment != null) ? comment.getContent() : null;
   }
 
   protected List<String> parseAnnotations(final NodeWithAnnotations<?> node) {
