@@ -256,14 +256,20 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     if (expr.isUnaryExpr()) {
       // Evaluate unary expressions such as `-1`, `-2`, etc:
       switch (expr.asUnaryExpr().getOperator()) {
-        case MINUS:
+        case PLUS: {
+          final Expression subExpr = expr.asUnaryExpr().getExpression();
+          return this.evalExpression(subExpr);
+        }
+        case MINUS: {
           final Expression subExpr = expr.asUnaryExpr().getExpression();
           if (subExpr.isDoubleLiteralExpr()) return -1.0 * subExpr.asDoubleLiteralExpr().asDouble();
           if (subExpr.isIntegerLiteralExpr()) return -1 * subExpr.asIntegerLiteralExpr().asInt();
           if (subExpr.isLongLiteralExpr()) return -1L * subExpr.asLongLiteralExpr().asLong();
           return null; // unable to evaluate expression
-        default:
+        }
+        default: {
           return null; // unable to evaluate expression
+        }
       }
     }
 
