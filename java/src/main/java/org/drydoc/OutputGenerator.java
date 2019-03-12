@@ -216,7 +216,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/Node.html
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/comments/Comment.html
     final Comment comment = node.getComment().orElse(null);
-    return (comment != null) ? comment.getContent() : null;
+    return (comment != null) ? comment.getContent().trim() : null;
   }
 
   protected List<String> parseAnnotations(final NodeWithAnnotations<?> node) {
