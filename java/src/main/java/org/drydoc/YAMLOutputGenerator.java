@@ -18,9 +18,10 @@ public class YAMLOutputGenerator extends OutputGenerator {
     final YAMLFactory yamlFactory = new YAMLFactory();
     yamlFactory.enable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
     yamlFactory.enable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-    yamlFactory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
+    yamlFactory.disable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
     yamlFactory.enable(YAMLGenerator.Feature.ALWAYS_QUOTE_NUMBERS_AS_STRINGS);
     yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS);
+    //yamlFactory.enable(YAMLGenerator.Feature.CANONICAL_OUTPUT); // DEBUG
     this.yamlMapper = new ObjectMapper(yamlFactory);
   }
 
