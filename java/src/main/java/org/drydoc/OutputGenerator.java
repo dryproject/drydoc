@@ -2,6 +2,7 @@
 
 package org.drydoc;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -274,29 +275,40 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     }
 
     if (expr.isFieldAccessExpr()) {
-      // TODO: reimplement this using reflection.
-      switch (expr.toString()) {
-        case "Byte.BYTES":               return Byte.BYTES;
-        case "Byte.MAX_VALUE":           return Byte.MAX_VALUE;
-        case "Byte.MIN_VALUE":           return Byte.MIN_VALUE;
-        case "Byte.SIZE":                return Byte.SIZE;
-        case "Character.MAX_CODE_POINT": return Character.MAX_CODE_POINT;
-        case "Character.MAX_VALUE":      return Character.MAX_VALUE;
-        case "Character.MIN_CODE_POINT": return Character.MIN_CODE_POINT;
-        case "Character.MIN_VALUE":      return Character.MIN_VALUE;
-        case "Integer.BYTES":            return Integer.BYTES;
-        case "Integer.MAX_VALUE":        return Integer.MAX_VALUE;
-        case "Integer.MIN_VALUE":        return Integer.MIN_VALUE;
-        case "Integer.SIZE":             return Integer.SIZE;
-        case "Long.BYTES":               return Long.BYTES;
-        case "Long.MAX_VALUE":           return Long.MAX_VALUE;
-        case "Long.MIN_VALUE":           return Long.MIN_VALUE;
-        case "Long.SIZE":                return Long.SIZE;
-        case "Short.BYTES":              return Short.BYTES;
-        case "Short.MAX_VALUE":          return Short.MAX_VALUE;
-        case "Short.MIN_VALUE":          return Short.MIN_VALUE;
-        case "Short.SIZE":               return Short.SIZE;
-        default: return null; // unknown field access
+      final Expression scope = expr.asFieldAccessExpr().getScope();
+      if (!scope.isNameExpr()) return null; // dynamic field access not supported
+      final String className = scope.asNameExpr().getNameAsString();
+      final String fieldName = expr.asFieldAccessExpr().getNameAsString();
+      switch (className) {
+        case "Boolean":
+        case "Byte":
+        case "Character":
+        case "Double":
+        case "Float":
+        case "Integer":
+        case "Long":
+        case "Math":
+        case "Number":
+        case "Short":
+        case "String":
+          try {
+            final Class<?> class_ = Class.forName("java.lang." + className);
+            final Field field = class_.getField(fieldName);
+            return field.get(null);
+          }
+          catch (final ClassNotFoundException error) {
+            assert(false); // unreachable
+            return null; // unreachable
+          }
+          catch (final NoSuchFieldException error) {
+            return null; // unknown field access
+          }
+          catch (final IllegalAccessException error) {
+            assert(false); // unreachable
+            return null; // unreachable
+          }
+        default:
+          return null; // unknown field access
       }
     }
 
