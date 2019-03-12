@@ -66,6 +66,11 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final ClassOrInterfaceDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/ClassOrInterfaceDeclaration.html
+    if (node.isPrivate()) {
+      super.visit(node, arg);
+      return;
+    }
+
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
@@ -130,6 +135,10 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final ConstructorDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/ConstructorDeclaration.html
+    if (node.isPrivate()) {
+      super.visit(node, arg);
+      return;
+    }
 
     super.visit(node, arg);
   }
@@ -137,6 +146,11 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final FieldDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/FieldDeclaration.html
+    if (node.isPrivate()) {
+      super.visit(node, arg);
+      return;
+    }
+
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
@@ -156,6 +170,11 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   @Override
   public void visit(final MethodDeclaration node, final Void arg) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/body/MethodDeclaration.html
+    if (node.isPrivate()) {
+      super.visit(node, arg);
+      return;
+    }
+
     final List<String> annotations = this.parseAnnotations(node);
     final List<String> modifiers = this.parseModifiers(node);
 
