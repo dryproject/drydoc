@@ -2,7 +2,6 @@
 
 package org.drydoc;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +20,6 @@ import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -32,6 +30,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
   // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/visitor/VoidVisitor.html
 
+  protected final PartialEvaluator evaluator = new PartialEvaluator();
   protected String packageName;
   protected List<String> className;
 
@@ -147,7 +146,8 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       final String name = variable.getName().asString();
       final String id = String.format("%s.%s%c%s", this.packageName, String.join(".", this.className), separator, name);
       final String type = variable.getTypeAsString();
-      final Object value = variable.getInitializer().isPresent() ? this.evalExpression(variable.getInitializer().get()) : null;
+      final Object value = variable.getInitializer().isPresent() ?
+        evaluator.evalExpression(variable.getInitializer().get()) : null;
 
       emit(new FieldRecord(id, name, comment, annotations, modifiers, type, value));
     }
@@ -239,83 +239,5 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
       result.add(modifier.getKeyword().asString());
     }
     return result;
-  }
-
-  /** Partially evaluates constant field initializer expressions. */
-  Object evalExpression(final Expression expr) {
-    if (expr.isLiteralExpr()) {
-      if (expr.isNullLiteralExpr()) return null;
-      if (expr.isBooleanLiteralExpr()) return expr.asBooleanLiteralExpr().getValue();
-      if (expr.isCharLiteralExpr()) return expr.asCharLiteralExpr().asChar();
-      if (expr.isDoubleLiteralExpr()) return expr.asDoubleLiteralExpr().asDouble();
-      if (expr.isIntegerLiteralExpr()) return expr.asIntegerLiteralExpr().asInt();
-      if (expr.isLongLiteralExpr()) return expr.asLongLiteralExpr().asLong();
-      if (expr.isStringLiteralExpr()) return expr.asStringLiteralExpr().asString();
-      return null; // unknown literal type
-    }
-
-    if (expr.isUnaryExpr()) {
-      // Evaluate unary expressions such as `-1`, `-2`, etc:
-      switch (expr.asUnaryExpr().getOperator()) {
-        case PLUS: {
-          final Expression subExpr = expr.asUnaryExpr().getExpression();
-          return this.evalExpression(subExpr);
-        }
-        case MINUS: {
-          final Expression subExpr = expr.asUnaryExpr().getExpression();
-          if (subExpr.isDoubleLiteralExpr()) return -1.0 * subExpr.asDoubleLiteralExpr().asDouble();
-          if (subExpr.isIntegerLiteralExpr()) return -1 * subExpr.asIntegerLiteralExpr().asInt();
-          if (subExpr.isLongLiteralExpr()) return -1L * subExpr.asLongLiteralExpr().asLong();
-          return null; // unable to evaluate expression
-        }
-        default: {
-          return null; // unable to evaluate expression
-        }
-      }
-    }
-
-    if (expr.isFieldAccessExpr()) {
-      final Expression scope = expr.asFieldAccessExpr().getScope();
-      if (!scope.isNameExpr()) return null; // dynamic field access not supported
-      final String className = scope.asNameExpr().getNameAsString();
-      final String fieldName = expr.asFieldAccessExpr().getNameAsString();
-      switch (className) {
-        case "Boolean":
-        case "Byte":
-        case "Character":
-        case "Double":
-        case "Float":
-        case "Integer":
-        case "Long":
-        case "Math":
-        case "Number":
-        case "Short":
-        case "String":
-          try {
-            final Class<?> class_ = Class.forName("java.lang." + className);
-            final Field field = class_.getField(fieldName);
-            return field.get(null);
-          }
-          catch (final ClassNotFoundException error) {
-            assert(false); // unreachable
-            return null; // unreachable
-          }
-          catch (final NoSuchFieldException error) {
-            return null; // unknown field access
-          }
-          catch (final IllegalAccessException error) {
-            assert(false); // unreachable
-            return null; // unreachable
-          }
-        default:
-          return null; // unknown field access
-      }
-    }
-
-    if (expr.isMethodCallExpr()) {
-      // TODO: parse `UUID.fromString("...")`
-    }
-
-    return null; // unable to evaluate expression
   }
 }
