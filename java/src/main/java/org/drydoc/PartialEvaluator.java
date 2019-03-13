@@ -11,7 +11,9 @@ import com.github.javaparser.ast.expr.LiteralExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 
-/** PartialEvaluator */
+/**
+ * A partial evaluator for Java initializer expressions.
+ */
 public class PartialEvaluator {
 
   /** Partially evaluates constant field initializer expressions. */
@@ -54,18 +56,18 @@ public class PartialEvaluator {
   public Object evalUnaryExpression(final UnaryExpr expr) {
     assert(expr.isUnaryExpr());
 
-    // Evaluate unary expressions such as `-1`, `-2`, etc:
+    final Expression operand = expr.getExpression();
+
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/expr/UnaryExpr.Operator.html
     switch (expr.getOperator()) {
-      case PLUS: {
-        final Expression subExpr = expr.getExpression();
-        return this.evalExpression(subExpr);
+      case PLUS: {   // `+123`, etc.
+        return this.evalExpression(operand);
       }
 
-      case MINUS: {
-        final Expression subExpr = expr.getExpression();
-        if (subExpr.isDoubleLiteralExpr()) return -1.0 * subExpr.asDoubleLiteralExpr().asDouble();
-        if (subExpr.isIntegerLiteralExpr()) return -1 * subExpr.asIntegerLiteralExpr().asInt();
-        if (subExpr.isLongLiteralExpr()) return -1L * subExpr.asLongLiteralExpr().asLong();
+      case MINUS: {  // `-1`, `-2`, etc.
+        if (operand.isDoubleLiteralExpr()) return -1.0 * operand.asDoubleLiteralExpr().asDouble();
+        if (operand.isIntegerLiteralExpr()) return -1 * operand.asIntegerLiteralExpr().asInt();
+        if (operand.isLongLiteralExpr()) return -1L * operand.asLongLiteralExpr().asLong();
         return null; // unable to evaluate expression
       }
 
@@ -78,9 +80,18 @@ public class PartialEvaluator {
   public Object evalBinaryExpression(final BinaryExpr expr) {
     assert(expr.isBinaryExpr());
 
+    final Expression operand1 = expr.getLeft();
+    final Expression operand2 = expr.getRight();
+
+    // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/expr/BinaryExpr.Operator.html
     switch (expr.getOperator()) {
-      case LEFT_SHIFT: {
-        return null; // TODO
+      case LEFT_SHIFT: { // `1<<8`, etc.
+        if (operand1.isIntegerLiteralExpr() && operand2.isIntegerLiteralExpr()) {
+          final int lhs = operand1.asIntegerLiteralExpr().asInt();
+          final int rhs = operand2.asIntegerLiteralExpr().asInt();
+          return lhs << rhs;
+        }
+        return null; // unable to evaluate expression
       }
 
       default: {
