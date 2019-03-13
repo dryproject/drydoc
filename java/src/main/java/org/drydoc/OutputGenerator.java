@@ -230,6 +230,7 @@ public abstract class OutputGenerator extends VoidVisitorAdapter<Void> {
     return result;
   }
 
+  /** Parses modifiers for classes, interfaces, fields and methods. */
   protected List<String> parseModifiers(final NodeWithModifiers<?> node) {
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/nodeTypes/NodeWithModifiers.html
     // See: https://static.javadoc.io/com.github.javaparser/javaparser-core/3.13.3/com/github/javaparser/ast/Modifier.html
